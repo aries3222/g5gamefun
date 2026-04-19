@@ -1,117 +1,192 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>Gloria 的默書小遊戲</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小一英文温習 - Nature Vocabulary</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { --primary: #ff7675; --secondary: #74b9ff; --bg: #f0f2f5; }
-        body { font-family: 'Comic Sans MS', 'Microsoft JhengHei', sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 20px; }
-        #game-box { background: white; width: 100%; max-width: 500px; border-radius: 20px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 4px solid var(--secondary); }
-        h1 { color: var(--primary); font-size: 24px; }
-        .zone { margin: 20px 0; padding: 15px; border: 2px dashed #ccc; min-height: 50px; border-radius: 10px; }
-        .word-card { display: inline-block; padding: 8px 15px; margin: 5px; background: var(--secondary); color: white; border-radius: 20px; cursor: pointer; transition: 0.2s; }
-        .word-card:hover { transform: scale(1.1); background: #0984e3; }
-        .btn { background: var(--primary); color: white; border: none; padding: 10px 25px; border-radius: 50px; font-size: 18px; cursor: pointer; margin-top: 20px; }
-        .btn:disabled { background: #ccc; }
-        #msg { height: 30px; margin-top: 10px; font-weight: bold; color: #2d3436; }
-        .speaker { font-size: 24px; cursor: pointer; margin-left: 10px; }
+        @import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&display=swap');
+        body {
+            font-family: 'Lexend', sans-serif;
+            background-color: #f0f9ff;
+        }
+        .card-bounce:hover {
+            transform: translateY(-5px);
+            transition: all 0.3s ease;
+        }
+        .correct-anim {
+            animation: pulse 0.5s ease-in-out;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
-<body>
+<body class="min-h-screen flex flex-col items-center p-4">
 
-<div id="game-box">
-    <h1>🎒 Dictation 16 溫習遊戲</h1>
-    <p>Gloria, 請把單字拖/按到下方框框排好：</p>
-    
-    <div id="q-text" style="font-weight: bold; color: #636e72;"></div>
-    
-    <div id="pool" class="zone"></div>
-    
-    <div id="answer" class="zone"></div>
+    <!-- 標題區域 -->
+    <header class="text-center my-6">
+        <h1 class="text-3xl font-bold text-blue-600">英文詞彙温習</h1>
+        <h2 class="text-xl text-gray-700 mt-2">Dictation 16: Nature Vocabulary (Part B)</h2>
+    </header>
 
-    <div id="msg">點擊單字開始！</div>
-    
-    <button class="btn" id="nextBtn" onclick="loadNext()" disabled>下一題 ➔</button>
-    <div style="margin-top:20px; font-size: 14px; color: #b2bec3;">目標：Part A & B</div>
-</div>
+    <!-- 遊戲控制台 -->
+    <div id="game-container" class="w-full max-w-4xl bg-white rounded-3xl shadow-xl p-6 border-4 border-blue-200">
+        
+        <!-- 導航按鈕 -->
+        <div class="flex justify-center gap-4 mb-8">
+            <button onclick="showStudyMode()" id="study-btn" class="px-6 py-2 bg-blue-500 text-white rounded-full font-bold hover:bg-blue-600 transition">
+                學習模式 (Study)
+            </button>
+            <button onclick="startQuizMode()" id="quiz-btn" class="px-6 py-2 bg-purple-500 text-white rounded-full font-bold hover:bg-purple-600 transition">
+                挑戰模式 (Quiz)
+            </button>
+        </div>
 
-<script>
-    const questions = [
-        { q: "What is your name?", words: ["What", "is", "your", "name?"] },
-        { q: "My name is Dan.", words: ["My", "name", "is", "Dan."] },
-        { q: "How do you do?", words: ["How", "do", "you", "do?"] },
-        { q: "I walk over the flowers.", words: ["I", "walk", "over", "the", "flowers."] },
-        { q: "I jump on the grass.", words: ["I", "jump", "on", "the", "grass."] },
-        { q: "You can catch me.", words: ["You", "can", "catch", "me."] },
-        { q: "hills", words: ["hills"], hint: "⛰️" },
-        { q: "mountains", words: ["mountains"], hint: "🏔️" },
-        { q: "the moon", words: ["the", "moon"], hint: "🌙" },
-        { q: "the sun", words: ["the", "sun"], hint: "☀️" }
-    ];
+        <!-- 學習模式介面 -->
+        <div id="study-mode" class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+            <!-- 由 JS 生成 -->
+        </div>
 
-    let currentIdx = 0;
-    let currentAns = [];
+        <!-- 挑戰模式介面 -->
+        <div id="quiz-mode" class="hidden text-center">
+            <div class="mb-6">
+                <p class="text-lg text-gray-600">聽聲音，選出正確的單字！</p>
+                <div class="flex justify-center items-center gap-4 mt-4">
+                    <button onclick="playTargetWord()" class="bg-yellow-400 p-4 rounded-full shadow-lg hover:bg-yellow-500 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                    </button>
+                    <span id="score-display" class="text-2xl font-bold text-orange-500">得分: 0</span>
+                </div>
+            </div>
+            <div id="quiz-options" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <!-- 由 JS 生成 -->
+            </div>
+        </div>
 
-    function speak(text) {
-        const msg = new SpeechSynthesisUtterance();
-        msg.text = text;
-        msg.lang = 'en-US';
-        window.speechSynthesis.speak(msg);
-    }
+        <!-- 反饋訊息 -->
+        <div id="feedback" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 px-8 py-3 rounded-full text-white font-bold opacity-0 transition-opacity duration-300">
+        </div>
+    </div>
 
-    function loadNext() {
-        if (currentIdx >= questions.length) {
-            document.getElementById('game-box').innerHTML = "<h1>🎉 完咗喇！</h1><p>Gloria 真棒！默書加油！</p><button class='btn' onclick='location.reload()'>再玩一次</button>";
-            return;
+    <script>
+        const vocab = [
+            { id: 1, word: "hills", emoji: "⛰️" },
+            { id: 2, word: "mountains", emoji: "🏔️" },
+            { id: 3, word: "rivers", emoji: "🏞️" },
+            { id: 4, word: "seas", emoji: "🌊" },
+            { id: 5, word: "clouds", emoji: "☁️" },
+            { id: 6, word: "stars", emoji: "⭐" },
+            { id: 7, word: "trees", emoji: "🌳" },
+            { id: 8, word: "the sky", emoji: "☀️" },
+            { id: 9, word: "the moon", emoji: "🌙" },
+            { id: 10, word: "the sun", emoji: "🌞" }
+        ];
+
+        let score = 0;
+        let currentTarget = null;
+        let isQuizMode = false;
+
+        // 初始化學習模式
+        function initStudy() {
+            const container = document.getElementById('study-mode');
+            container.innerHTML = '';
+            vocab.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'bg-blue-50 p-4 rounded-xl text-center cursor-pointer card-bounce border-2 border-transparent hover:border-blue-300';
+                card.innerHTML = `
+                    <div class="text-4xl mb-2">${item.emoji}</div>
+                    <div class="font-bold text-blue-800 text-lg">${item.word}</div>
+                `;
+                card.onclick = () => speak(item.word);
+                container.appendChild(card);
+            });
         }
 
-        const q = questions[currentIdx];
-        document.getElementById('q-text').innerHTML = q.hint ? `單字挑戰：${q.hint}` : "重組句子：";
-        document.getElementById('answer').innerHTML = "";
-        document.getElementById('msg').innerText = "點擊單字排列";
-        document.getElementById('msg').style.color = "#2d3436";
-        document.getElementById('nextBtn').disabled = true;
-        currentAns = [];
+        function speak(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.8; // 稍微慢一點方便小學生聽
+            window.speechSynthesis.speak(utterance);
+        }
 
-        let shuffled = [...q.words].sort(() => Math.random() - 0.5);
-        const pool = document.getElementById('pool');
-        pool.innerHTML = "";
-        
-        shuffled.forEach(w => {
-            const span = document.createElement('div');
-            span.className = 'word-card';
-            span.innerText = w;
-            span.onclick = function() {
-                moveWord(this, q.words.length, q.q);
-            };
-            pool.appendChild(span);
-        });
-    }
+        function showStudyMode() {
+            isQuizMode = false;
+            document.getElementById('study-mode').classList.remove('hidden');
+            document.getElementById('quiz-mode').classList.add('hidden');
+            document.getElementById('study-btn').classList.add('bg-blue-500');
+            document.getElementById('quiz-btn').classList.replace('bg-purple-700', 'bg-purple-500');
+            initStudy();
+        }
 
-    function moveWord(el, targetLen, correctStr) {
-        const answerZone = document.getElementById('answer');
-        answerZone.appendChild(el);
-        currentAns.push(el.innerText);
-        el.onclick = null; // 防止重複點擊
+        function startQuizMode() {
+            isQuizMode = true;
+            score = 0;
+            document.getElementById('score-display').innerText = `得分: ${score}`;
+            document.getElementById('study-mode').classList.add('hidden');
+            document.getElementById('quiz-mode').classList.remove('hidden');
+            document.getElementById('quiz-btn').classList.add('bg-purple-700');
+            document.getElementById('study-btn').classList.replace('bg-blue-500', 'bg-blue-300');
+            nextQuestion();
+        }
 
-        if (currentAns.length === targetLen) {
-            if (currentAns.join(" ") === correctStr) {
-                document.getElementById('msg').innerText = "✅ Correct! 答對了！";
-                document.getElementById('msg').style.color = "green";
-                document.getElementById('nextBtn').disabled = false;
-                speak(correctStr);
-                currentIdx++;
+        function nextQuestion() {
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+            
+            // 隨機選一個目標
+            currentTarget = vocab[Math.floor(Math.random() * vocab.length)];
+            
+            // 隨機選 4 個選項（包含目標）
+            let options = [...vocab].sort(() => 0.5 - Math.random()).slice(0, 4);
+            if (!options.find(o => o.id === currentTarget.id)) {
+                options[0] = currentTarget;
+            }
+            options.sort(() => 0.5 - Math.random());
+
+            options.forEach(item => {
+                const btn = document.createElement('button');
+                btn.className = 'bg-white border-2 border-purple-200 p-6 rounded-2xl text-xl font-bold hover:bg-purple-50 transition active:scale-95';
+                btn.innerText = item.word;
+                btn.onclick = () => checkAnswer(item);
+                optionsContainer.appendChild(btn);
+            });
+
+            setTimeout(() => playTargetWord(), 500);
+        }
+
+        function playTargetWord() {
+            if (currentTarget) speak(currentTarget.word);
+        }
+
+        function checkAnswer(selected) {
+            const feedback = document.getElementById('feedback');
+            if (selected.id === currentTarget.id) {
+                score++;
+                document.getElementById('score-display').innerText = `得分: ${score}`;
+                showFeedback("答對了！太棒了！", "bg-green-500");
+                speak("Correct!");
+                setTimeout(nextQuestion, 1200);
             } else {
-                document.getElementById('msg').innerText = "❌ Try again! 再試試！";
-                document.getElementById('msg').style.color = "red";
-                setTimeout(loadNext, 1000);
+                showFeedback("再試一次看看！", "bg-red-500");
+                speak("Try again");
             }
         }
-    }
 
-    // 初始化
-    loadNext();
-</script>
+        function showFeedback(text, colorClass) {
+            const feedback = document.getElementById('feedback');
+            feedback.innerText = text;
+            feedback.className = `fixed bottom-10 left-1/2 transform -translate-x-1/2 px-8 py-3 rounded-full text-white font-bold transition-opacity duration-300 ${colorClass} opacity-100`;
+            setTimeout(() => {
+                feedback.classList.replace('opacity-100', 'opacity-0');
+            }, 1000);
+        }
 
+        // 頁面加載後初始化
+        window.onload = initStudy;
+    </script>
 </body>
 </html>
