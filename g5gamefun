@@ -2,241 +2,122 @@
 <html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-width=1.0">
-    <title>ABRSM 第 5 級樂理挑戰賽</title>
+    <title>ABRSM Grade 5 模擬考試系統</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f4f8;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            color: #333;
-        }
-        #game-container {
-            background-color: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            width: 90%;
-            max-width: 600px;
-            padding: 30px;
-            text-align: center;
-            position: relative;
-        }
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-        }
-        .hidden {
-            display: none !important;
-        }
-        button {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            font-size: 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.1s;
-            margin-top: 15px;
-        }
-        button:hover {
-            background-color: #2980b9;
-        }
-        button:active {
-            transform: scale(0.98);
-        }
-        .option-btn {
-            display: block;
-            width: 100%;
-            margin: 10px 0;
-            background-color: #ecf0f1;
-            color: #2c3e50;
-            border: 2px solid #bdc3c7;
-            text-align: left;
-            padding: 15px;
-            font-weight: bold;
-        }
-        .option-btn:hover {
-            background-color: #e0e6ed;
-        }
-        .option-btn.correct {
-            background-color: #2ecc71;
-            color: white;
-            border-color: #27ae60;
-        }
-        .option-btn.wrong {
-            background-color: #e74c3c;
-            color: white;
-            border-color: #c0392b;
-        }
-        #progress-bar {
-            width: 100%;
-            background-color: #ecf0f1;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            height: 10px;
-            overflow: hidden;
-        }
-        #progress {
-            height: 100%;
-            background-color: #3498db;
-            width: 0%;
-            transition: width 0.3s;
-        }
-        #question-text {
-            font-size: 1.2em;
-            margin-bottom: 25px;
-            line-height: 1.5;
-        }
-        .score-text {
-            font-size: 1.5em;
-            color: #f39c12;
-            font-weight: bold;
-            margin: 20px 0;
-        }
+        :root { --abrsm-blue: #005596; --bg-gray: #f4f7f9; }
+        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg-gray); margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        header { background: var(--abrsm-blue); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+        .sidebar { width: 250px; background: white; border-right: 1px solid #ddd; padding: 20px; display: flex; flex-direction: column; }
+        .content { flex: 1; padding: 40px; overflow-y: auto; display: flex; justify-content: center; }
+        .quiz-card { background: white; width: 100%; max-width: 800px; padding: 30px; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-top: 5px solid var(--abrsm-blue); }
+        .question-header { font-size: 14px; color: #666; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .question-text { font-size: 18px; font-weight: bold; margin-bottom: 25px; line-height: 1.6; }
+        .option { display: flex; align-items: center; padding: 15px; border: 1px solid #ddd; margin-bottom: 12px; cursor: pointer; border-radius: 4px; transition: 0.2s; }
+        .option:hover { background: #f0f7ff; border-color: var(--abrsm-blue); }
+        .option.selected { background: #e7f1f9; border-color: var(--abrsm-blue); font-weight: bold; }
+        .nav-footer { margin-top: 30px; display: flex; justify-content: space-between; }
+        button { padding: 10px 25px; cursor: pointer; border-radius: 4px; border: none; font-size: 14px; }
+        .btn-next { background: var(--abrsm-blue); color: white; }
+        .timer { font-size: 20px; font-weight: bold; }
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 20px; }
+        .grid-item { width: 35px; height: 35px; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; }
+        .grid-item.active { background: var(--abrsm-blue); color: white; border-color: var(--abrsm-blue); }
+        .grid-item.answered { background: #e0e0e0; }
     </style>
 </head>
 <body>
 
-<div id="game-container">
-    <div id="start-screen">
-        <h1>🎵 ABRSM 第 5 級樂理挑戰賽 🎵</h1>
-        <p>測試你的樂理知識！準備好迎接挑戰了嗎？</p>
-        <button onclick="startGame()">開始遊戲</button>
+<header>
+    <div style="font-size: 1.2em; font-weight: bold;">ABRSM 第 5 級樂理模擬考試 (2020 新制)</div>
+    <div class="timer">剩餘時間：<span id="time">120:00</span></div>
+</header>
+
+<div class="main-container">
+    <div class="sidebar">
+        <div style="font-weight: bold;">題目導覽</div>
+        <div class="grid" id="q-grid"></div>
+        <div style="margin-top: auto;">
+            <button style="width: 100%; background: #27ae60; color: white; font-weight: bold;" onclick="finishExams()">交卷並結算分數</button>
+        </div>
     </div>
 
-    <div id="quiz-screen" class="hidden">
-        <div id="progress-bar"><div id="progress"></div></div>
-        <div id="question-text">題目載入中...</div>
-        <div id="options-container"></div>
-        <p>目前得分：<span id="score-display">0</span></p>
-    </div>
-
-    <div id="result-screen" class="hidden">
-        <h1>🎉 挑戰完成！ 🎉</h1>
-        <div class="score-text">你的總分：<span id="final-score">0</span> / 5</div>
-        <p id="feedback-text"></p>
-        <button onclick="location.reload()">再玩一次</button>
+    <div class="content">
+        <div class="quiz-card" id="quiz-area">
+            <div id="q-content">
+                </div>
+            <div class="nav-footer">
+                <button onclick="prevQ()">上一題</button>
+                <button class="btn-next" onclick="nextQ()">下一題</button>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
     const questions = [
-        {
-            question: "節奏題：一個附點二分音符 (Dotted Minim) 相等於多少個十六分音符 (Semiquavers)？",
-            options: ["4 個", "6 個", "8 個", "12 個"],
-            answer: 3
-        },
-        {
-            question: "調性題：哪一個是 B 小調 (B minor) 的關係大調？",
-            options: ["G 大調", "D 大調", "A 大調", "E 大調"],
-            answer: 1
-        },
-        {
-            question: "術語題：音樂術語「Sotto voce」的意思是什麼？",
-            options: ["逐漸減慢", "活潑地", "輕聲地", "漸弱直至消失"],
-            answer: 2
-        },
-        {
-            question: "樂器題：下列哪一種樂器通常使用中音譜號 (Alto Clef)？",
-            options: ["小提琴 (Violin)", "中提琴 (Viola)", "大提琴 (Cello)", "雙簧管 (Oboe)"],
-            answer: 1
-        },
-        {
-            question: "和弦題：在樂曲結尾，由和弦 IV 進行到和弦 I，這屬於哪一種終止式？",
-            options: ["完全終止 (Perfect)", "不完全終止 (Imperfect)", "變格終止 (Plagal)", "阻礙終止 (Interrupted)"],
-            answer: 2
-        }
+        { q: "在 6/8 拍中，以下哪種組合能填滿一個完整小節？", a: ["三個四分音符", "兩個附點四分音符", "六個十六分音符", "四個八分音符"], c: 1 },
+        { q: "下列哪一個音名是 C# 的異符同音 (Enharmonic Equivalent)？", a: ["D", "Db", "Cb", "B#"], c: 1 },
+        { q: "哪一個譜號通常用於編寫中提琴 (Viola) 的樂譜？", a: ["高音譜號", "低音譜號", "中音譜號 (Alto Clef)", "次中音譜號"], c: 2 },
+        { q: "F# 大調的關係小調 (Relative Minor) 是：", a: ["D# 小調", "Eb 小調", "D 小調", "C# 小調"], c: 0 },
+        { q: "術語「Giocoso」的含義是：", a: ["悲傷地", "愉快地、戲謔地", "非常緩慢地", "甜美地"], c: 1 }
     ];
 
-    let currentQuestionIndex = 0;
-    let score = 0;
-    let acceptingAnswers = false;
+    let currentIdx = 0;
+    let userAnswers = new Array(questions.length).fill(null);
 
-    const startScreen = document.getElementById('start-screen');
-    const quizScreen = document.getElementById('quiz-screen');
-    const resultScreen = document.getElementById('result-screen');
-    const questionText = document.getElementById('question-text');
-    const optionsContainer = document.getElementById('options-container');
-    const progress = document.getElementById('progress');
-    const scoreDisplay = document.getElementById('score-display');
-    const finalScoreDisplay = document.getElementById('final-score');
-    const feedbackText = document.getElementById('feedback-text');
-
-    function startGame() {
-        startScreen.classList.add('hidden');
-        quizScreen.classList.remove('hidden');
-        currentQuestionIndex = 0;
-        score = 0;
-        loadQuestion();
-    }
-
-    function loadQuestion() {
-        if (currentQuestionIndex >= questions.length) {
-            endGame();
-            return;
-        }
-
-        acceptingAnswers = true;
-        const currentQuestion = questions[currentQuestionIndex];
-        questionText.innerText = currentQuestion.question;
-        optionsContainer.innerHTML = '';
-
-        // 更新進度條
-        progress.style.width = ((currentQuestionIndex) / questions.length) * 100 + '%';
-        scoreDisplay.innerText = score;
-
-        currentQuestion.options.forEach((option, index) => {
-            const button = document.createElement('button');
-            button.innerText = option;
-            button.classList.add('option-btn');
-            button.addEventListener('click', () => selectAnswer(button, index));
-            optionsContainer.appendChild(button);
+    function renderQ() {
+        const q = questions[currentIdx];
+        let html = `<div class="question-header">第 ${currentIdx + 1} 題，共 ${questions.length} 題</div>
+                    <div class="question-text">${q.q}</div>`;
+        
+        q.a.forEach((opt, i) => {
+            const isSelected = userAnswers[currentIdx] === i ? 'selected' : '';
+            html += `<div class="option ${isSelected}" onclick="selectOpt(${i})">${opt}</div>`;
         });
+        
+        document.getElementById('q-content').innerHTML = html;
+        updateGrid();
     }
 
-    function selectAnswer(selectedButton, selectedIndex) {
-        if (!acceptingAnswers) return;
-        acceptingAnswers = false;
+    function selectOpt(i) {
+        userAnswers[currentIdx] = i;
+        renderQ();
+    }
 
-        const currentQuestion = questions[currentQuestionIndex];
-        const correctIndex = currentQuestion.answer;
+    function nextQ() { if (currentIdx < questions.length - 1) { currentIdx++; renderQ(); } }
+    function prevQ() { if (currentIdx > 0) { currentIdx--; renderQ(); } }
 
-        if (selectedIndex === correctIndex) {
-            selectedButton.classList.add('correct');
-            score++;
-        } else {
-            selectedButton.classList.add('wrong');
-            // 標示出正確答案
-            optionsContainer.children[correctIndex].classList.add('correct');
+    function updateGrid() {
+        let html = '';
+        for (let i = 0; i < questions.length; i++) {
+            let cls = 'grid-item';
+            if (i === currentIdx) cls += ' active';
+            else if (userAnswers[i] !== null) cls += ' answered';
+            html += `<div class="${cls}" onclick="jumpTo(${i})">${i + 1}</div>`;
         }
-
-        scoreDisplay.innerText = score;
-
-        setTimeout(() => {
-            currentQuestionIndex++;
-            loadQuestion();
-        }, 1200); // 延遲 1.2 秒換下一題，讓玩家看清楚結果
+        document.getElementById('q-grid').innerHTML = html;
     }
 
-    function endGame() {
-        quizScreen.classList.add('hidden');
-        resultScreen.classList.remove('hidden');
-        finalScoreDisplay.innerText = score;
+    function jumpTo(i) { currentIdx = i; renderQ(); }
 
-        if (score === 5) {
-            feedbackText.innerText = "太厲害了！你的樂理基礎非常扎實！🏆";
-        } else if (score >= 3) {
-            feedbackText.innerText = "表現不錯！繼續保持練習會更棒喔！👍";
-        } else {
-            feedbackText.innerText = "不要氣餒，多複習一下 ABRSM 第 5 級的筆記吧！📚";
-        }
+    function finishExams() {
+        let score = 0;
+        userAnswers.forEach((ans, i) => { if (ans === questions[i].c) score++; });
+        const finalScore = Math.round((score / questions.length) * 75);
+        alert(`考試結束！\n你的得分：${finalScore} / 75\n${finalScore >= 50 ? '恭喜合格！' : '仍需努力！'}`);
     }
+
+    // 簡單倒數計時
+    let totalSec = 120 * 60;
+    setInterval(() => {
+        totalSec--;
+        let m = Math.floor(totalSec / 60);
+        let s = totalSec % 60;
+        document.getElementById('time').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+    }, 1000);
+
+    renderQ();
 </script>
-
 </body>
 </html>
