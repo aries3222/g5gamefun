@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-width=1.0">
+    <title>ABRSM 第 5 級樂理挑戰賽</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        #game-container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 600px;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .hidden {
+            display: none !important;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            margin-top: 15px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        .option-btn {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            background-color: #ecf0f1;
+            color: #2c3e50;
+            border: 2px solid #bdc3c7;
+            text-align: left;
+            padding: 15px;
+            font-weight: bold;
+        }
+        .option-btn:hover {
+            background-color: #e0e6ed;
+        }
+        .option-btn.correct {
+            background-color: #2ecc71;
+            color: white;
+            border-color: #27ae60;
+        }
+        .option-btn.wrong {
+            background-color: #e74c3c;
+            color: white;
+            border-color: #c0392b;
+        }
+        #progress-bar {
+            width: 100%;
+            background-color: #ecf0f1;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            height: 10px;
+            overflow: hidden;
+        }
+        #progress {
+            height: 100%;
+            background-color: #3498db;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        #question-text {
+            font-size: 1.2em;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        .score-text {
+            font-size: 1.5em;
+            color: #f39c12;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="start-screen">
+        <h1>🎵 ABRSM 第 5 級樂理挑戰賽 🎵</h1>
+        <p>測試你的樂理知識！準備好迎接挑戰了嗎？</p>
+        <button onclick="startGame()">開始遊戲</button>
+    </div>
+
+    <div id="quiz-screen" class="hidden">
+        <div id="progress-bar"><div id="progress"></div></div>
+        <div id="question-text">題目載入中...</div>
+        <div id="options-container"></div>
+        <p>目前得分：<span id="score-display">0</span></p>
+    </div>
+
+    <div id="result-screen" class="hidden">
+        <h1>🎉 挑戰完成！ 🎉</h1>
+        <div class="score-text">你的總分：<span id="final-score">0</span> / 5</div>
+        <p id="feedback-text"></p>
+        <button onclick="location.reload()">再玩一次</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        {
+            question: "節奏題：一個附點二分音符 (Dotted Minim) 相等於多少個十六分音符 (Semiquavers)？",
+            options: ["4 個", "6 個", "8 個", "12 個"],
+            answer: 3
+        },
+        {
+            question: "調性題：哪一個是 B 小調 (B minor) 的關係大調？",
+            options: ["G 大調", "D 大調", "A 大調", "E 大調"],
+            answer: 1
+        },
+        {
+            question: "術語題：音樂術語「Sotto voce」的意思是什麼？",
+            options: ["逐漸減慢", "活潑地", "輕聲地", "漸弱直至消失"],
+            answer: 2
+        },
+        {
+            question: "樂器題：下列哪一種樂器通常使用中音譜號 (Alto Clef)？",
+            options: ["小提琴 (Violin)", "中提琴 (Viola)", "大提琴 (Cello)", "雙簧管 (Oboe)"],
+            answer: 1
+        },
+        {
+            question: "和弦題：在樂曲結尾，由和弦 IV 進行到和弦 I，這屬於哪一種終止式？",
+            options: ["完全終止 (Perfect)", "不完全終止 (Imperfect)", "變格終止 (Plagal)", "阻礙終止 (Interrupted)"],
+            answer: 2
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let acceptingAnswers = false;
+
+    const startScreen = document.getElementById('start-screen');
+    const quizScreen = document.getElementById('quiz-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const questionText = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const progress = document.getElementById('progress');
+    const scoreDisplay = document.getElementById('score-display');
+    const finalScoreDisplay = document.getElementById('final-score');
+    const feedbackText = document.getElementById('feedback-text');
+
+    function startGame() {
+        startScreen.classList.add('hidden');
+        quizScreen.classList.remove('hidden');
+        currentQuestionIndex = 0;
+        score = 0;
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        if (currentQuestionIndex >= questions.length) {
+            endGame();
+            return;
+        }
+
+        acceptingAnswers = true;
+        const currentQuestion = questions[currentQuestionIndex];
+        questionText.innerText = currentQuestion.question;
+        optionsContainer.innerHTML = '';
+
+        // 更新進度條
+        progress.style.width = ((currentQuestionIndex) / questions.length) * 100 + '%';
+        scoreDisplay.innerText = score;
+
+        currentQuestion.options.forEach((option, index) => {
+            const button = document.createElement('button');
+            button.innerText = option;
+            button.classList.add('option-btn');
+            button.addEventListener('click', () => selectAnswer(button, index));
+            optionsContainer.appendChild(button);
+        });
+    }
+
+    function selectAnswer(selectedButton, selectedIndex) {
+        if (!acceptingAnswers) return;
+        acceptingAnswers = false;
+
+        const currentQuestion = questions[currentQuestionIndex];
+        const correctIndex = currentQuestion.answer;
+
+        if (selectedIndex === correctIndex) {
+            selectedButton.classList.add('correct');
+            score++;
+        } else {
+            selectedButton.classList.add('wrong');
+            // 標示出正確答案
+            optionsContainer.children[correctIndex].classList.add('correct');
+        }
+
+        scoreDisplay.innerText = score;
+
+        setTimeout(() => {
+            currentQuestionIndex++;
+            loadQuestion();
+        }, 1200); // 延遲 1.2 秒換下一題，讓玩家看清楚結果
+    }
+
+    function endGame() {
+        quizScreen.classList.add('hidden');
+        resultScreen.classList.remove('hidden');
+        finalScoreDisplay.innerText = score;
+
+        if (score === 5) {
+            feedbackText.innerText = "太厲害了！你的樂理基礎非常扎實！🏆";
+        } else if (score >= 3) {
+            feedbackText.innerText = "表現不錯！繼續保持練習會更棒喔！👍";
+        } else {
+            feedbackText.innerText = "不要氣餒，多複習一下 ABRSM 第 5 級的筆記吧！📚";
+        }
+    }
+</script>
+
+</body>
+</html>
