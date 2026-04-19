@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dan 的飛行冒險 - 默書溫習遊戲</title>
+    <style>
+        body { font-family: 'Comic Sans MS', cursive, sans-serif; background-color: #e0f7fa; text-align: center; margin: 0; padding: 20px; }
+        #game-container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+        h1 { color: #0277bd; }
+        .hidden { display: none; }
+        .btn { background-color: #4fc3f7; border: none; color: white; padding: 10px 20px; font-size: 18px; border-radius: 10px; cursor: pointer; margin: 10px; }
+        .btn:hover { background-color: #039be5; }
+        .word-box { display: inline-block; padding: 10px; margin: 5px; background: #fff9c4; border: 2px solid #fbc02d; border-radius: 5px; cursor: pointer; }
+        #sentence-area { min-height: 50px; border-bottom: 2px dashed #ccc; margin: 20px 0; padding: 10px; font-size: 20px; }
+        #message { font-weight: bold; margin: 15px; height: 20px; }
+        .nature-img { font-size: 50px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <h1>🚀 Dan 的飛行冒險</h1>
+    <p>準備好溫習 Dictation 16 了嗎？</p>
+    
+    <div id="start-screen">
+        <button class="btn" onclick="startPartA()">挑戰 Part A (句子重組)</button>
+        <button class="btn" onclick="startPartB()">挑戰 Part B (自然詞彙)</button>
+    </div>
+
+    <div id="quiz-area" class="hidden">
+        <h2 id="level-title"></h2>
+        <div id="question-display"></div>
+        <div id="sentence-area"></div>
+        <div id="options-area"></div>
+        <div id="message"></div>
+        <button id="next-btn" class="btn hidden" onclick="nextQuestion()">下一題</button>
+        <button class="btn" style="background-color: #ff8a65;" onclick="reset()">返回主選單</button>
+    </div>
+</div>
+
+<script>
+    const partA = [
+        { q: "What is your name?", words: ["What", "is", "your", "name?"] },
+        { q: "My name is Dan.", words: ["My", "name", "is", "Dan."] },
+        { q: "How do you do?", words: ["How", "do", "you", "do?"] },
+        { q: "I walk over the flowers.", words: ["I", "walk", "over", "the", "flowers."] },
+        { q: "I jump on the grass.", words: ["I", "jump", "on", "the", "grass."] },
+        { q: "You can catch me.", words: ["You", "can", "catch", "me."] }
+    ];
+
+    const partB = [
+        { word: "hills", emoji: "⛰️" }, { word: "mountains", emoji: "🏔️" },
+        { word: "rivers", emoji: "🏞️" }, { word: "seas", emoji: "🌊" },
+        { word: "clouds", emoji: "☁️" }, { word: "stars", emoji: "⭐" },
+        { word: "trees", emoji: "🌳" }, { word: "the sky", emoji: "🌌" },
+        { word: "the moon", emoji: "🌙" }, { word: "the sun", emoji: "☀️" }
+    ];
+
+    let currentMode = '';
+    let currentIndex = 0;
+    let userSentence = [];
+
+    function startPartA() {
+        currentMode = 'A';
+        currentIndex = 0;
+        showLevel();
+    }
+
+    function startPartB() {
+        currentMode = 'B';
+        currentIndex = 0;
+        showLevel();
+    }
+
+    function showLevel() {
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('quiz-area').classList.remove('hidden');
+        document.getElementById('next-btn').classList.add('hidden');
+        document.getElementById('message').innerText = "";
+        
+        if (currentMode === 'A') {
+            document.getElementById('level-title').innerText = "Part A: 句子排列組合";
+            setupPartA();
+        } else {
+            document.getElementById('level-title').innerText = "Part B: 看圖選單字";
+            setupPartB();
+        }
+    }
+
+    function setupPartA() {
+        const q = partA[currentIndex];
+        userSentence = [];
+        document.getElementById('sentence-area').innerText = "";
+        document.getElementById('question-display').innerText = "把單字排成正確的句子：";
+        
+        let shuffled = [...q.words].sort(() => Math.random() - 0.5);
+        const optionsArea = document.getElementById('options-area');
+        optionsArea.innerHTML = "";
+        
+        shuffled.forEach(w => {
+            let span = document.createElement('span');
+            span.className = 'word-box';
+            span.innerText = w;
+            span.onclick = () => {
+                userSentence.push(w);
+                document.getElementById('sentence-area').innerText = userSentence.join(" ");
+                span.style.display = "none";
+                if (userSentence.length === q.words.length) checkPartA();
+            };
+            optionsArea.appendChild(span);
+        });
+    }
+
+    function checkPartA() {
+        if (userSentence.join(" ") === partA[currentIndex].q) {
+            document.getElementById('message').innerText = "✅ 太棒了！正確！";
+            document.getElementById('message').style.color = "green";
+            document.getElementById('next-btn').classList.remove('hidden');
+        } else {
+            document.getElementById('message').innerText = "❌ 再試一次喔！";
+            document.getElementById('message').style.color = "red";
+            setTimeout(setupPartA, 1500);
+        }
+    }
+
+    function setupPartB() {
+        const item = partB[currentIndex];
+        document.getElementById('sentence-area').innerHTML = `<div class="nature-img">${item.emoji}</div>`;
+        document.getElementById('question-display').innerText = "這個圖畫代表哪個單字？";
+        
+        const optionsArea = document.getElementById('options-area');
+        optionsArea.innerHTML = "";
+        
+        let choices = [item.word];
+        while(choices.length < 3) {
+            let randomWord = partB[Math.floor(Math.random() * partB.length)].word;
+            if (!choices.includes(randomWord)) choices.push(randomWord);
+        }
+        choices.sort(() => Math.random() - 0.5);
+
+        choices.forEach(c => {
+            let btn = document.createElement('button');
+            btn.className = 'btn';
+            btn.innerText = c;
+            btn.onclick = () => {
+                if (c === item.word) {
+                    document.getElementById('message').innerText = "✅ 答對了！";
+                    document.getElementById('message').style.color = "green";
+                    document.getElementById('next-btn').classList.remove('hidden');
+                } else {
+                    document.getElementById('message').innerText = "❌ 不對喔，再想一想。";
+                    document.getElementById('message').style.color = "red";
+                }
+            };
+            optionsArea.appendChild(btn);
+        });
+    }
+
+    function nextQuestion() {
+        currentIndex++;
+        const total = currentMode === 'A' ? partA.length : partB.length;
+        if (currentIndex < total) {
+            showLevel();
+        } else {
+            alert("恭喜你完成了這個部分！默書加油！");
+            reset();
+        }
+    }
+
+    function reset() {
+        document.getElementById('start-screen').classList.remove('hidden');
+        document.getElementById('quiz-area').classList.add('hidden');
+    }
+</script>
+
+</body>
+</html>
